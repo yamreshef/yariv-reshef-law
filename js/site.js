@@ -130,10 +130,10 @@
   /* ---- edit mode (loaded only when the address ends with ?edit) ---- */
   if (editing) {
     var css = document.createElement('link');
-    css.rel = 'stylesheet'; css.href = 'css/editor.css'; css.dataset.editor = '1';
+    css.rel = 'stylesheet'; css.href = 'css/editor.css?v=' + Date.now(); css.dataset.editor = '1';
     document.head.appendChild(css);
     var s = document.createElement('script');
-    s.src = 'js/editor.js'; s.dataset.editor = '1';
+    s.src = 'js/editor.js?v=' + Date.now(); s.dataset.editor = '1';
     document.body.appendChild(s);
   }
 })();
