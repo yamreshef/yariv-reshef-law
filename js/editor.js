@@ -10,6 +10,19 @@
   var originals = { text: {}, img: {} };
 
   function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+
+  /* repository comes from the page itself, so the editor only ever needs the access code */
+  var repoMeta = document.querySelector('meta[name="yr-repo"]');
+  var REPO = repoMeta ? repoMeta.content : '', BRANCH = 'main';
+  function cleanRepo(s) {
+    return String(s).trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/^\/+|\/+$/g, '');
+  }
+  /* personal edit link: ...?edit#key=CODE  -> remember the code in this browser and hide it from the address bar */
+  var m = /[#&]key=([^&]+)/.exec(location.hash);
+  if (m) {
+    try { localStorage.setItem(GH, JSON.stringify({ repo: REPO, branch: BRANCH, token: decodeURIComponent(m[1]).trim() })); } catch (e) { /* ignore */ }
+    history.replaceState(null, '', location.pathname + '?edit');
+  }
   function save() {
     try { localStorage.setItem(DRAFT, JSON.stringify(draft)); setState('הטיוטה נשמרה בדפדפן זה'); }
     catch (e) { setState('אין מקום לשמור טיוטה – כדאי לפרסם או להקטין תמונות', true); }
@@ -149,11 +162,20 @@
     opts = opts || {};
     opts.headers = { Authorization: 'Bearer ' + cfg.token, Accept: 'application/vnd.github+json' };
     return fetch('https://api.github.com/repos/' + cfg.repo + '/contents/' + path, opts).then(function (r) {
-      return r.json().then(function (j) {
-        if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'קוד הגישה שגוי או חסר הרשאה' : r.status === 404 ? 'המאגר או הקובץ לא נמצאו' : (j.message || 'שגיאה ' + r.status));
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) {
+          var why = r.status === 401 ? 'קוד הגישה שגוי או שפג תוקפו'
+            : r.status === 403 ? 'לקוד הגישה אין הרשאת כתיבה (Contents: Read and write)'
+            : r.status === 404 ? 'קוד הגישה לא מורשה למאגר ' + cfg.repo
+            : r.status === 409 || r.status === 422 ? 'האתר עודכן בינתיים – רעננו את הדף ונסו שוב'
+            : 'שגיאה';
+          var err = new Error(why + ' [' + r.status + (j.message ? ': ' + j.message : '') + ']');
+          err.auth = r.status === 401 || r.status === 403 || r.status === 404;
+          throw err;
+        }
         return j;
       });
-    });
+    }, function () { throw new Error('אין חיבור ל-GitHub – בדקו את האינטרנט או חוסם פרסומות'); });
   }
   function put(cfg, path, content64, sha, msg) {
     var body = { message: msg, content: content64, branch: cfg.branch };
@@ -163,24 +185,25 @@
 
   function askSettings() {
     return new Promise(function (resolve) {
-      var cfg = load(GH) || { repo: '', branch: 'main', token: '' };
+      var cfg = load(GH) || { repo: REPO, branch: BRANCH, token: '' };
       var d = document.createElement('dialog');
       d.className = 'ed-dlg'; d.dataset.editor = '1';
       d.innerHTML =
         '<form method="dialog"><h2>חיבור לפרסום</h2>' +
-        '<p>ממלאים פעם אחת. הפרטים נשמרים רק בדפדפן הזה.</p>' +
+        '<p>הדביקו את קוד הגישה שקיבלתם. ממלאים פעם אחת – הקוד נשמר רק בדפדפן הזה.</p>' +
+        '<label>קוד גישה<input name="token" type="password" dir="ltr" autocomplete="off" required></label>' +
+        '<details><summary>הגדרות מתקדמות</summary>' +
         '<label>מאגר GitHub (בעלים/שם)<input name="repo" dir="ltr" placeholder="owner/repo" required></label>' +
-        '<label>ענף<input name="branch" dir="ltr" required></label>' +
-        '<label>קוד גישה (Token)<input name="token" type="password" dir="ltr" autocomplete="off" required></label>' +
+        '<label>ענף<input name="branch" dir="ltr" required></label></details>' +
         '<div class="ed-dlg__b"><button class="ed-b ed-b--main" value="ok">שמירה ופרסום</button>' +
         '<button class="ed-b" value="cancel" formnovalidate>ביטול</button></div></form>';
       document.body.appendChild(d);
       var f = d.querySelector('form');
-      f.repo.value = cfg.repo; f.branch.value = cfg.branch || 'main'; f.token.value = cfg.token;
+      f.repo.value = cfg.repo || REPO; f.branch.value = cfg.branch || BRANCH; f.token.value = cfg.token;
       d.addEventListener('close', function () {
         var out = null;
         if (d.returnValue === 'ok') {
-          out = { repo: f.repo.value.trim(), branch: f.branch.value.trim(), token: f.token.value.trim() };
+          out = { repo: cleanRepo(f.repo.value), branch: f.branch.value.trim(), token: f.token.value.trim() };
           localStorage.setItem(GH, JSON.stringify(out));
         }
         d.remove(); resolve(out);
@@ -189,10 +212,13 @@
     });
   }
 
+  var needAsk = false;
   function publish(forceAsk) {
     if (!changed()) { setState('אין שינויים לפרסום'); return; }
     var saved = load(GH);
-    var getCfg = (saved && saved.token && !forceAsk) ? Promise.resolve(saved) : askSettings();
+    if (saved) { saved.repo = cleanRepo(saved.repo || REPO); saved.branch = saved.branch || BRANCH; }
+    var getCfg = (saved && saved.token && saved.repo && !forceAsk && !needAsk) ? Promise.resolve(saved) : askSettings();
+    needAsk = false;
     getCfg.then(function (cfg) {
       if (!cfg) return;
       setState('מפרסם…');
@@ -214,8 +240,8 @@
           setState('פורסם! השינויים יופיעו באתר בתוך דקה-שתיים');
         });
     }).catch(function (e) {
-      setState('הפרסום נכשל: ' + e.message, true);
-      if (/קוד הגישה|המאגר/.test(e.message)) publish(true);
+      setState('הפרסום נכשל: ' + e.message + (e.auth ? ' – לחצו שוב על "פרסום לאתר" כדי להזין קוד מחדש' : ''), true);
+      if (e.auth) { needAsk = true; }
     });
   }
 

@@ -117,7 +117,7 @@
   applyPrefs();
 
   /* ---- gentle reveal on scroll ---- */
-  var editing = /[?&]edit\b/.test(location.search);
+  var editing = /[?&]edit\b/.test(location.search) || /[#&]key=/.test(location.hash);
   if ('IntersectionObserver' in window && !editing) {
     var io = new IntersectionObserver(function (es) {
       es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
