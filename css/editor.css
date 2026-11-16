@@ -1,0 +1,27 @@
+/* Edit-mode styles (loaded only with ?edit) */
+html.ed-on { scroll-padding-top: 150px; }
+.ed-bar { position: sticky; top: 0; z-index: 60; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 16px; background: #fff7d6; color: #1b2233; border-bottom: 2px solid #c9a45c; font: 400 .95rem/1.4 "Heebo", Arial, sans-serif; }
+html.ed-on .top { top: var(--ed-h, 54px); }
+.ed-bar__t { background: #101a2c; color: #fff; padding: 4px 12px; border-radius: 999px; }
+.ed-bar__h { flex: 1 1 220px; }
+.ed-bar__s { font-weight: 700; color: #0d6b3a; }
+.ed-bar__s.err { color: #b3261e; }
+.ed-b { font: 700 .93rem "Heebo", Arial, sans-serif; padding: 8px 16px; min-height: 40px; border-radius: 999px; border: 1.5px solid #101a2c; background: #fff; color: #101a2c; cursor: pointer; }
+.ed-b:hover { background: #f1ece0; }
+.ed-b--main { background: #101a2c; color: #fff; }
+.ed-b--main:hover { background: #24365a; }
+
+html.ed-on [data-edit] { outline: 1.5px dashed rgba(201,164,92,.75); outline-offset: 3px; border-radius: 3px; cursor: text; min-width: 1.5em; }
+html.ed-on [data-edit]:hover { outline-color: #2f6fed; }
+html.ed-on [data-edit]:focus { outline: 2.5px solid #2f6fed; background: rgba(47,111,237,.1); }
+html.ed-on [data-edit-img] { cursor: pointer; outline: 3px dashed #c9a45c; outline-offset: -8px; }
+html.ed-on [data-edit-img]:hover, html.ed-on [data-edit-img]:focus { outline-color: #2f6fed; filter: brightness(1.08); }
+html.ed-on .dock { display: none; }
+
+.ed-dlg { width: min(460px, 100% - 32px); border: 0; border-radius: 14px; padding: 28px; border-top: 5px solid #c9a45c; font-family: "Heebo", Arial, sans-serif; color: #1b2233; }
+.ed-dlg::backdrop { background: rgba(10,17,32,.7); }
+.ed-dlg h2 { font-size: 1.5rem; margin-bottom: 6px; }
+.ed-dlg form { display: grid; gap: 14px; }
+.ed-dlg label { display: grid; gap: 5px; font-weight: 500; font-size: .93rem; }
+.ed-dlg input { font: 400 1rem "Heebo", Arial, sans-serif; padding: 10px 12px; border: 1.5px solid #b9bfca; border-radius: 10px; }
+.ed-dlg__b { display: flex; gap: 10px; }

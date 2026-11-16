@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 640" role="img" aria-label="תמונת עורך הדין – להחלפה">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3d63"/><stop offset="1" stop-color="#16223a"/></linearGradient></defs>
+<rect width="520" height="640" fill="url(#g)"/>
+<circle cx="260" cy="250" r="92" fill="#3a4f7a"/>
+<path d="M70 640c0-130 85-215 190-215s190 85 190 215z" fill="#3a4f7a"/>
+<path d="M260 425l-34 60 34 155 34-155z" fill="#c9a45c" opacity=".85"/>
+<text x="260" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#e8ecf4">כאן תופיע תמונת עורך הדין</text>
+</svg>
